@@ -1,0 +1,359 @@
+---
+title: "Yelp_Sentiment"
+author: "Group003"
+date: "4/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#load the packages
+library(data.table)
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(DT)
+library(NLP)
+library(tidytext)
+library(knitr)
+library(leaflet)
+library(tm)
+library(gridExtra)
+library(grid)
+library(igraph)
+library(ggraph)
+library(readr)
+library(readxl)
+library(forecast)
+library(caret)
+library(rpart)
+library(caret)
+library(e1071)
+library(data.table)
+library(randomForest)
+library(leaps)
+library(MASS)
+library(readr)
+library(corrplot)
+library(gridExtra)
+library(formattable)
+```
+
+```{r}
+#uplaod the model dataset(for top 10 cities)
+library(readr)
+ModelData01 <- read_csv("~/Desktop/ModelData.csv")
+ModelData01$X1 <- NULL
+
+#get the distribution of five stars
+table(ModelData01$review_stars)
+p1 <- ggplot(data=ModelData01,aes(x=review_stars))+geom_histogram(bins=30,fill="red")+
+  ggtitle("Distribution of star scores")+labs(x="number of stars",y="frequency")
+p1
+```
+
+
+```{r}
+#1 Las Vegas
+lv<- ModelData01 %>%
+  filter(city=="Las Vegas") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+lv01 <- lv %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(lv01)
+```
+
+
+
+```{r}
+#2.Phoenix
+ph<- ModelData01 %>%
+  filter(city=="Phoenix") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+ph01 <- ph %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(ph01)
+```
+
+```{r}
+#3.Scottsdale
+sc<- ModelData01 %>%
+  filter(city=="Scottsdale") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+sc01 <- sc %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(sc01)
+
+```
+
+```{r}
+#4.Charlotte
+char<- ModelData01 %>%
+  filter(city=="Charlotte") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+char01 <- char %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(char01)
+```
+
+```{r}
+#5 Pittsburgh
+pi<- ModelData01 %>%
+  filter(city=="Pittsburgh") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+pi01 <- pi %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(pi01)
+```
+
+```{r}
+#6. Tempe
+te<- ModelData01 %>%
+  filter(city=="Tempe") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+te01 <- te %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(te01)
+
+```
+
+```{r}
+#7. Henderson
+he<- ModelData01 %>%
+  filter(city=="Henderson") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+he01 <- he %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(he01)
+```
+
+```{r}
+#8. Mesa
+me<- ModelData01 %>%
+  filter(city=="Mesa") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+me01 <- me %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(me01)
+```
+
+```{r}
+#9.Chandler
+cha<- ModelData01 %>%
+  filter(city=="Chandler") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+cha01 <- cha %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(cha01)
+```
+
+```{r}
+#10. Cleveland
+cle<- ModelData01 %>%
+  filter(city=="Cleveland") %>% 
+  group_by(business_id,name,review_count) %>%
+  summarize(Avg=mean(review_stars)) %>%
+  arrange(desc(review_count))
+
+cle01 <- cle %>%
+  filter(
+    if(Avg >= 4){
+      review_count==review_count
+    }
+    else{
+      review_count==0
+    }
+  ) 
+
+head(cle01)
+```
+
+```{r}
+#filter the top 5 restaurants for each city in the ModelData01
+new_modeldata <- ModelData01 %>% filter(business_id %in% c("4JNXUYY8wbaaDmk3BPzlWw","DkYS3arLOhA8si5uUEmHOw","iCQpiavjjPzJ5_3gPD5Ebg","rcaPajgKOJC2vo_l3xa42A","faPVqws-x-5k2CQKDNtHxw",
+                                                           "VyVIneSU7XAWgMBllI6LnQ","OgJ0KxwJcJ9R5bUK0ixCbg","frCxZS7lPhEnQRJ3UY6m7A","9a3DrZvpYxVs3k_qwlCNSw","Xg5qEQiB-7L6kGJ5F4K3bQ",
+                                                           "3l54GTr8-E3XPbIxnF_sAA","K-uQkfSUTwu5LIwPB4b_vg","d10IxZPirVJlOSpdRZJczA","wUKzaS1MHg94RGM6z8u9mw","Yl05MqCs9xRzrJFkGWLpgA",
+                                                           "RAh9WCQAuocM7hYM5_6tnw","WbJ1LRQdOuYYlRLyTkuuxw","RVQE2Z2uky4c0-njFQO66g","01fuY2NNscttoTxOYbuZXw","ALwAlxItASeEs2vYAeLXHA",
+                                                           "JLbgvGM4FXh9zNP4O5ZWjQ","u4sTiCzVeIHZY8OlaL346Q","woXlprCuowrLJswWere3TQ","dLc1d1zwd1Teu2QED5TmlA","SmkYLXEYhzwUZdS6TAevHg",
+                                                           "JzOp695tclcNCNMuBl7oxA","wl0QZqAzr1DelslQ02JGCQ","aiX_WP7NKPTdF9CfI-M-wg","5FIOXmUE3qMviX9GafGH-Q","vK1_qKEG7zHvjiTOsN0CRg",
+                                                           "eLFfWcdb7VkqNyTONksHiQ","uBdYMY6a6A7FyxzTSwOiDg","7tNY4BYLA4laqWNV4IWGQg","5eV8oUGdBXylwB7HeaDFOA","OK0ba4X5seibH8oMWh4bhw",
+                                                           "e4NQLZynhSmvwl38hC4m-A","ohEnmKpF7i2_ujme1p_vUQ","LYgAf_vpMQU6JqBcTXg-Sw","tV5PcOIFlB12dpcbCy78VA","DgZ-pZUo3drzpiCDlDr9IQ",
+                                                           "Pthe4qk5xh4n-ef-9bvMSg","ujgpePdD8Q-fP1mPFnw0Qw","NF0H-HFJOK6R8fkhYkFuzw","8yAVuMwtijEosdjiCrtyXQ","U4OLUFb9VxMmpMXm1ZF-cQ",
+                                                           "LNsZJP6jZ11e0tDljOLPiQ","J1RDyyPxhioqm8c_fi4P4Q","meXjqyhTNLFmknY39y2sMg","F2pfjAZ_3dMTGCKv6c5wOw","SzcCJJmreMlWCsNjupdVAA"))
+
+```
+
+
+```{r}
+#sentiment analysis with the inner join
+#use the function to get a table with one-token-per-row
+text_model <- new_modeldata %>% 
+  dplyr::select(business_id, name,city,state, review_count, review_id,review_stars, text) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words,by = "word")
+head(text_model)
+```
+
+```{r}
+#find the most common words
+text_model %>% count(word, sort=TRUE) %>% slice(1:50)
+
+#visulize the most common words ( n >1500)
+  text_model %>% count(word, sort = TRUE) %>% filter(n > 1500) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  xlab("Common Word") +
+  coord_flip()
+```
+
+
+```{r}
+#use the afinn method
+afinn_text <-text_model %>%
+  inner_join(get_sentiments("afinn"),by = "word") %>%
+  group_by(review_id, name,city,review_stars,word) %>%
+  summarize(sentiment = mean(value))
+  
+afinn_text
+
+```
+
+
+```{r}
+#plot the sentiment scores and review_stars
+ggplot(afinn_text, aes(review_stars, sentiment, group = review_stars)) +
+  geom_boxplot() +
+  ylab("Average sentiment score")
+
+```
+
+
+```{r}
+#get the table for the average sentiment scores for restaurants 
+tabledata<-afinn_text %>% group_by(name,city) %>%
+summarize(sentiment=mean(sentiment), Average_Rating=mean(review_stars))
+
+
+names(tabledata)[names(tabledata) == "Average_Rating"] <- "Average Rating"
+names(tabledata)[names(tabledata) == "name"] <- "Name"
+names(tabledata)[names(tabledata) == "city"] <- "City"
+names(tabledata)[names(tabledata) == "sentiment"] <- "Sentiment"
+
+#write.table(tabledata, file=".tabledata.csv", sep = ",")
+write.csv(tabledata,"tabledata.csv")
+```
+
+
+
+
+
+

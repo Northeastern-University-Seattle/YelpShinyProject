@@ -1,0 +1,361 @@
+---
+title: "Yelp_Viz"
+author: "Group003"
+date: "4/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
+#load the packages
+library(data.table)
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(DT)
+library(NLP)
+library(tidytext)
+library(knitr)
+library(leaflet)
+library(tm)
+library(gridExtra)
+library(grid)
+#library(radarchart)
+library(igraph)
+library(ggraph)
+#load the packages
+library(readr)
+library(readxl)
+library(forecast)
+library(caret)
+library(rpart)
+library(caret)
+library(e1071)
+library(data.table)
+library(randomForest)
+library(leaps)
+library(MASS)
+library(readr)
+library(corrplot)
+library(gridExtra)
+library(formattable)
+
+#In Python:
+#Select the business that is open =1
+#Filter out 50 states of US
+```
+
+```{r}
+#load the business dataset
+library(readr)
+business11_data <- read_csv("~/Desktop/business11_data.csv")
+
+#drop the irrelavant column
+business11_data$X1 <- NULL
+business11_data$`Unnamed: 0` <- NULL
+
+head(business11_data)
+str(business11_data)
+
+```
+
+
+
+```{r}
+#check the missing values
+sapply(business11_data, function(x) sum(is.na(x)))
+
+#drop the missing values 
+business011 <-na.omit(business11_data)
+
+#drop the null values in category
+business01 <- business011[!business011$categories %in% " ", ]
+
+#check the duplicate elements in business_id
+business02 <-business01[!duplicated(business01$business_id), ]
+```
+
+```{r}
+#filter out all restaurants of US
+library(stringr)
+business03 <- business02 %>% filter(str_detect(categories,"Restaurants"))
+write.csv(business03,"business03.csv")
+```
+
+
+
+
+
+```{r}
+#upload the review dataset
+library(readr)
+review_data <- read_csv("~/Desktop/review_data.csv")
+review_data$X1 <- NULL
+review_data$user_id <- NULL
+
+```
+
+```{r}
+#rename stars in review table
+names(review_data)[names(review_data) == "stars"] <- "review_stars"
+
+#check the missing values
+sapply(review_data, function(x) sum(is.na(x)))
+
+```
+
+
+
+```{r}
+#check the duplicate elements in review_id
+review_data <-review_data[!duplicated(review_data$review_id), ]
+
+```
+
+
+```{r}
+#drop the missing values 
+review01 <- na.omit(review_data)
+```
+
+
+```{r}
+#merge cleaned resturants business data and review data
+resturants_reviews <- merge(x = business03, y = review01, by = "business_id", all.x = TRUE)
+str(resturants_reviews)
+```
+
+```{r}
+#data exploration
+table(resturants_reviews$review_stars)
+p1 <- ggplot(data=resturants_reviews,aes(x=review_stars))+geom_histogram(bins=30,fill="red")+
+  ggtitle("Distribution of star scores")+labs(x="number of stars",y="frequency")+
+  scale_y_continuous(breaks=seq(0,1500000,250000))
+p1
+```
+
+```{r}
+#Review counts for major states
+business05 <- business03 %>% group_by(state) %>% 
+  summarise(total_review = sum(review_count), Avg_stars=mean(stars)) %>% 
+  arrange(desc(total_review)) %>% 
+  slice(1:10)
+write.csv(business05,"business05.csv")
+```
+
+```{r}
+#get the bar plot of states vs total reviews 
+ggplot(data=business05, aes(x=reorder(state,total_review), y=total_review)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=total_review), vjust=-0.3, size=3.5)+
+  xlab("State")+
+  ylab("Total Reviews")+
+  theme_minimal()
+
+```
+
+```{r}
+#get the bar plot of states vs average stars
+ggplot(data=business05, aes(x=reorder(state,Avg_stars), y=Avg_stars)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=round(Avg_stars,digits = 2)), vjust=-0.3, size=3.5)+
+  xlab("Major states")+
+  ylab("Average stars")+
+  theme_minimal()
+
+```
+
+
+```{r}
+#Review counts for major cities (top 10)
+business06 <- business03 %>% group_by(city) %>% 
+  summarise(total_review = sum(review_count),Avg_stars=mean(stars)) %>% 
+  arrange(desc(total_review)) %>% 
+  slice(1:10)
+write.csv(business06,"business06.csv")
+```
+
+```{r}
+#get the bar plot for cities vs total reviews
+ggplot(data=business06, aes(x=reorder(city,total_review), y=total_review)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=total_review), vjust=-0.3, size=3.5)+
+  xlab("Major cities")+
+  ylab("Total Reviews")+
+  theme_minimal()
+```
+
+
+```{r}
+#get the bar plot for cities vs average stars
+ggplot(data=business06, aes(x=reorder(city,Avg_stars), y=Avg_stars)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=round(Avg_stars,digits = 2)), vjust=-0.3, size=3.5)+
+  xlab("Major cities")+
+  ylab("Average stars")+
+  theme_minimal()
+```
+
+
+
+```{r}
+#Filter the 15 cuisine types 
+business04 <- business03 %>% filter(str_detect(categories,"American"))
+business07 <- business03 %>% filter(str_detect(categories,"Mexican"))
+business08 <- business03 %>% filter(str_detect(categories,"Italian"))
+business09 <- business03 %>% filter(str_detect(categories,"Japanese"))
+
+business10 <- business03 %>% filter(str_detect(categories,"Chinese"))
+business11 <- business03 %>% filter(str_detect(categories,"Thai"))
+business12 <- business03 %>% filter(str_detect(categories,"Mediterranean"))
+business13 <- business03 %>% filter(str_detect(categories,"French"))
+
+business14 <- business03 %>% filter(str_detect(categories,"Vietnamese"))
+business15 <- business03 %>% filter(str_detect(categories,"Greek"))
+business16 <- business03 %>% filter(str_detect(categories,"Indian"))
+business17 <- business03 %>% filter(str_detect(categories,"Korean"))
+
+business18 <- business03 %>% filter(str_detect(categories,"Hawaiian"))
+business19 <- business03 %>% filter(str_detect(categories,"African"))
+business20 <- business03 %>% filter(str_detect(categories,"Spanish"))
+
+
+#The defined cuisine types: (15)
+#American, Mexican,Italian,Japanese
+#Chinese, Thai,Mediterranean, French
+#Vietnamese,Greek,Indian,Korean
+#Hawaiian,African,Spanish
+```
+
+
+
+```{r}
+#word cloud
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+
+```
+
+```{r}
+
+```
+
+```{r}
+#wordcloud
+#example1: for overall business dataset(include all cuisine)
+categories <- unlist(strsplit(business03$categories, ";"))
+remove_categories <- c("Restaurants", "Food", "Nightlife", "Bars", "New")
+clean_categories <- removeWords(categories, remove_categories)
+# word cloud is created with this set of categories
+wordcloud(clean_categories, 
+          min.freq = 100,
+          random.order=FALSE, 
+          rot.per=0.35,
+          colors=brewer.pal( 8,"Dark2"))
+
+```
+
+```{r}
+#example2: for spanish cuisine
+categories <- unlist(strsplit(business20$categories, ";"))
+remove_categories <- c("Restaurants", "Food", "Nightlife", "Bars", "New")
+clean_categories <- removeWords(categories, remove_categories)
+# word cloud is created with this set of categories
+wordcloud(clean_categories, 
+          min.freq = 100,
+          random.order=FALSE, 
+          rot.per=0.35,
+          colors=brewer.pal( 8,"Dark2"))
+```
+
+```{r}
+#geographical locations
+#we can change the dataset or add the filter to get the geographical locations of different cuisines for same city
+geographical_map <- function(location_name){
+  
+      location_business <- business03 %>%
+                          # filter for the city
+                          filter(city == location_name) %>%
+                                        
+                          # Creates 3 level based on rating
+                          mutate( rating_level = ifelse(stars == 4 | stars == 5 ,"High", ifelse(stars == 3, "Medium", "Low")))
+      
+      # Creates color pallette for rating levels
+      pallete <- colorFactor(c("dark red",  "blue","dark green"), domain = c("Low", "Medium","High"))
+     
+      location_business %>%  
+                 leaflet() %>% 
+                 setView(lng = mean(location_business$longitude), 
+                         lat = mean(location_business$latitude), 
+                         zoom = 12) %>% 
+                 addProviderTiles(providers$CartoDB.Positron) %>%
+                 addCircleMarkers(~longitude, 
+                                  ~latitude,
+                                  radius = 3,
+                                  fillOpacity = 0.5,
+                                  # Creates clusters for restaurants on high level
+                                  clusterOptions = markerClusterOptions(),
+                                  # Color palette is assigned based on rating level
+                                  color = ~pallete(rating_level))
+     
+}
+
+```
+
+```{r}
+#Las Vegas
+geographical_map("Las Vegas")
+```
+
+
+```{r}
+#Information of the top 5 restaurants ( review stars) based on cities/cuisines
+business21 <- business03 %>% dplyr::select(state,city,categories,stars,name,review_count,latitude,longitude) %>%
+  filter(city=="Las Vegas",str_detect(categories,"American")) %>% 
+  arrange(desc(stars)) %>% 
+  slice(1:5)
+head(business21)
+
+#Information of the top 5 restaurants ( review counts) based on cities/cuisines 
+business22 <- business03 %>% dplyr::select(state,city,categories,stars,name,review_count,latitude,longitude) %>%
+  filter(city=="Las Vegas",str_detect(categories,"American")) %>% 
+  arrange(desc(review_count)) %>% 
+  slice(1:5)
+head(business22)
+
+
+```
+
+```{r}
+#get the location_business data
+ location_business <- business03 %>%
+  filter(city == city) %>%   
+  mutate( rating_level = ifelse(stars == 4 | stars == 5 ,"High", ifelse(stars == 3, "Medium", "Low")))
+write.csv( location_business," location_business.csv")
+```
+
+```{r}
+#get the modeldata for the sentiment analysis 
+topcities <- c("Las Vegas","Phoenix", "Scottsdale", "Charlotte","Pittsburgh","Tempe","Henderson", "Mesa","Chandler","Cleveland")
+ModelData007 <- resturants_reviews %>% filter(city==topcities)
+ModelData<- ModelData007 %>% filter(is_open=="1")
+ModelData
+
+write.csv(ModelData,"ModelData.csv")
+
+```
+
+
+
+
+

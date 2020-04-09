@@ -1,0 +1,12 @@
+name: YelpShinyProject
+title: YelpShinyProject
+username:
+account: vaibhavi
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2077191
+bundleId: 2984676
+url: https://vaibhavi.shinyapps.io/YelpShinyProject/
+when: 1586317929.93442
+asMultiple: FALSE
+asStatic: FALSE
