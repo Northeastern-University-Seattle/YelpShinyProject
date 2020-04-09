@@ -5,3 +5,6 @@ The goal of this project is to apply data analytics and utilize business and rev
 
 WebApp Link: https://vaibhavi.shinyapps.io/YelpShinyProject/
 
+
+The project was created by 4 team members on R Studio Cloud together and uploaded on GitHub after deployment. 
+
